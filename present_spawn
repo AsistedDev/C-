@@ -1,0 +1,62 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class PresentSpawn : MonoBehaviour
+{
+    public GameObject presentPrefab; 
+    public int maxPresents = 20;     
+    public float spawnInterval = 3f; 
+
+    private int presentCount = 0;
+
+    void Start()
+    {
+        StartCoroutine(SpawnPresents());
+    }
+
+    IEnumerator SpawnPresents()
+    {
+        while (presentCount < maxPresents)
+        {
+          
+            yield return new WaitForSeconds(spawnInterval);
+
+            SpawnPresent();
+
+            presentCount++;
+        }
+        Debug.Log("All presents spawned!");
+    }
+
+    void SpawnPresent()
+    {
+
+        Quaternion DesiredRotation = Quaternion.Euler(-90,0,0);
+
+        Vector3 randomPosition = new Vector3(
+            Random.Range(-20f, 20f),  
+            74f,  
+            Random.Range(-20f,20f)                    
+        );
+
+        GameObject Present = Instantiate(presentPrefab, randomPosition, DesiredRotation);
+        Present.tag = "Present";
+        Present.GetComponent<RotatingPresent>().enabled = true;
+
+        Debug.Log($"Spawned present #{presentCount + 1}");
+    }
+
+    public void DecreasePresentInt()
+    {
+        if (presentCount > 0)
+        {
+            presentCount -= 1;
+
+            if (presentCount < 20) 
+            {
+                StartCoroutine(SpawnPresents());
+            }
+        }
+    }
+}
