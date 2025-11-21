@@ -1,0 +1,46 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class TransparencyManager : MonoBehaviour
+{
+    private Material targetMaterial;
+
+    void Start()
+    {
+        targetMaterial = GetComponent<Renderer>().material;
+    }
+
+    public void EmissionFade(float targetIntensity, float duration)
+    {
+        if (targetMaterial != null)
+        {
+            StartCoroutine(FadeEmissionIntensity(targetMaterial, targetIntensity, duration));
+        }
+        else
+        {
+            Debug.LogWarning("Target material not found!");
+        }
+    }
+
+ 
+    private IEnumerator FadeEmissionIntensity(Material material, float targetIntensity, float duration)
+    {
+        Color startEmissionColor = material.GetColor("_EmissionColor");
+        float startIntensity = startEmissionColor.maxColorComponent;  // Get the current intensity
+
+        float elapsedTime = 0f;
+
+        while (elapsedTime < duration)
+        {
+            elapsedTime += Time.deltaTime;
+
+            float currentIntensity = Mathf.Lerp(startIntensity, targetIntensity, elapsedTime / duration);
+
+            material.SetColor("_EmissionColor", startEmissionColor * currentIntensity);
+
+            yield return null;
+        }
+        material.SetColor("_EmissionColor", startEmissionColor * targetIntensity);
+    }
+}
