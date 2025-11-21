@@ -1,0 +1,29 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class DamageScript : MonoBehaviour
+{
+    // Start is called before the first frame update
+    public MainMenu mainMenuScript;
+    public Movement movementScript;
+
+
+    void OnTriggerEnter(Collider collision)
+    {
+        
+        if (collision.transform.CompareTag("PlayerTag"))
+        {
+            if (movementScript.ExtraLife == false)
+            {
+                GameObject.Find("DataSaver").GetComponent<Datasave>().LastGameUnfinished = false;
+                mainMenuScript.FullGameReset();
+            }
+            else if (movementScript.ExtraLife == true)
+            {
+                movementScript.ExtraLife = false;
+            }
+
+        }
+    }
+}
