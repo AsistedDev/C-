@@ -1,0 +1,177 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.UI;
+
+
+public class ObstacleManager : MonoBehaviour
+{
+    public GameObject Snowball; 
+    public GameObject WarningSphere; 
+
+    public float WarningSphereSpawnInterval = 5f; 
+    public float WarningSphereDurationPeriod = 3f; 
+    public int SpherePerTime = 2; 
+
+    private int Spheres = 0;
+
+    public GameObject SnowSplashParticlePrefab; 
+
+    private void OnEnable()
+    {
+        print("Starts" + " SPHERE COUNT: " + Spheres);
+        Spheres = 0;
+        StartCoroutine(SpawnWarningSphere());
+    }
+
+    IEnumerator SpawnWarningSphere()
+    {
+        while (true)
+        {
+            if (Spheres < SpherePerTime)
+            {
+                Spheres++;
+                SpawnSphere();
+            }
+            yield return new WaitForSeconds(Random.Range(0, 0.4f));
+            yield return new WaitForSeconds(WarningSphereSpawnInterval);
+        }
+    }
+
+    IEnumerator WarningSphereCooldown(GameObject sphereInstance)
+    {
+        yield return new WaitForSeconds(WarningSphereDurationPeriod);
+
+        GameObject snowballInstance = SpawnSnowball(sphereInstance.transform.position);
+
+        yield return new WaitForSeconds(1.5f);
+
+        TriggerParticleEffect(sphereInstance.transform.position);
+
+        yield return new WaitForSeconds(0.2f);
+
+        DeleteSphere(sphereInstance);
+
+        yield return new WaitForSeconds(0.1f);
+       
+        DeleteSnowball(snowballInstance);
+    }
+
+
+
+    void TriggerParticleEffect(Vector3 position)
+    {
+        
+        GameObject particleInstance = Instantiate(SnowSplashParticlePrefab, position + new Vector3(0, 0.3f, 0), Quaternion.Euler(-90f,0f,0f));
+
+        
+        ParticleSystem particleSystem = particleInstance.GetComponent<ParticleSystem>();
+        particleSystem.Play();
+
+        
+        Destroy(particleInstance, particleSystem.main.duration + particleSystem.main.startLifetime.constantMax);
+    }
+
+    private void SpawnSphere()
+    {
+        Quaternion Rotation = Quaternion.Euler(0, 0, 0);
+
+        Vector3 randomPosition = new Vector3(
+            Random.Range(-25f, 25f),
+            73.2f, 
+            Random.Range(-25f, 25f)
+        );
+
+        GameObject sphereInstance = Instantiate(WarningSphere, randomPosition, Rotation);
+        sphereInstance.tag = "WarningSphere";
+
+       StartCoroutine(WarningSphereCooldown(sphereInstance));
+    }
+
+
+
+    private GameObject SpawnSnowball(Vector3 position)
+    {
+        
+        Vector3 spawnPosition = new Vector3(position.x, position.y + 10f, position.z); 
+
+        
+        GameObject snowballInstance = Instantiate(Snowball, spawnPosition, Quaternion.identity);
+
+        print("Snowball Spawned and Falling!");
+
+        
+        return snowballInstance;
+    }
+
+    private bool hasIncreased500 = false;
+    private bool hasIncreased1000 = false;
+    private bool hasIncreased2000 = false;
+    private bool hasIncreased3000 = false;
+    private bool hasIncreased5000 = false;
+    private bool hasIncreased7000 = false;
+
+    public Image Easy1;
+    public Image Easy2;
+    public Image Medium1;
+    public Image Medium2;
+    public Image Hard1;
+    public Image Hard2;
+    public void IncreaseDifficulty(int Score)
+    {
+        if (Score >= 500 && !hasIncreased500)
+        {
+            Easy1.enabled = true;
+            SpherePerTime++;
+            WarningSphereSpawnInterval -= 0.5f;
+            hasIncreased500 = true; 
+        }
+        else if (Score >= 1000 && !hasIncreased1000)
+        {
+            Easy2.enabled = true;
+            SpherePerTime += 2;
+            WarningSphereSpawnInterval -= 0.3f;
+            hasIncreased1000 = true;
+        }
+        else if (Score >= 2000 && !hasIncreased2000)
+        {
+            Medium1.enabled = true;
+            SpherePerTime ++;
+            WarningSphereSpawnInterval -= 0.2f;
+            hasIncreased2000 = true;
+        }
+        else if (Score >= 3000 && !hasIncreased3000)
+        {
+            Medium2.enabled = true;
+            SpherePerTime++;
+            WarningSphereSpawnInterval -= 0.2f;
+            hasIncreased3000 = true;
+        }
+        else if (Score >= 5000 && !hasIncreased5000)
+        {
+            Hard1.enabled = true;
+            SpherePerTime += 2;
+            WarningSphereSpawnInterval -= 0.1f;
+            hasIncreased5000 = true;
+        }
+        else if (Score >= 7000 && !hasIncreased7000)
+        {
+            Hard2.enabled = true;
+            SpherePerTime += 5;
+            WarningSphereSpawnInterval -= 0.1f;
+            hasIncreased7000 = true;
+        }
+    }
+
+
+    private void DeleteSnowball(GameObject snowball)
+    {
+        Destroy(snowball);
+    }
+
+    private void DeleteSphere(GameObject sphereInstance)
+    {
+        Destroy(sphereInstance);
+        Spheres--; 
+    }
+}
