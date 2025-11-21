@@ -1,0 +1,116 @@
+using System.Collections;
+using System.Collections.Generic;
+using System.IO;
+using UnityEngine;
+using UnityEngine.UI;
+
+public class Datasave : MonoBehaviour
+{
+    public AudioManager AudioScript;
+    // Saves the best time the player has achieved while he had "Timer" Option turned on
+    public float TimerValue;
+
+    // Saves latest settings after a player has left the game
+    public Vector3 LastSnowmanPosition;
+    public bool IsTimerOn;
+    public bool LastGameUnfinished;
+    public bool HasExtraLife;
+    public float LastTimerValue;
+    public int LastScore;
+
+    public bool DEBUGGING = false; // Used by developer for debugging
+    
+
+
+    public void SaveData()
+    {
+        Datamanager playerData = new Datamanager();
+        playerData.TimerValue = TimerValue;
+
+        playerData.LastSnowmanPosition = LastSnowmanPosition;
+        playerData.IsTimerOn = IsTimerOn;
+        playerData.LastGameUnfinished = LastGameUnfinished;
+        playerData.HasExtraLife = HasExtraLife;
+        playerData.LastTimerValue = LastTimerValue;
+        playerData.LastScore = LastScore;
+
+        string json = JsonUtility.ToJson(playerData);
+        string path = Application.persistentDataPath + "/playerData.json";
+        System.IO.File.WriteAllText(path, json);
+    }
+   
+
+    public void LoadGame()
+    {
+        string path = Application.persistentDataPath + "/playerData.json";
+        if (File.Exists(path))
+        {
+            string json = System.IO.File.ReadAllText(path);
+            Datamanager loadedData = JsonUtility.FromJson<Datamanager>(json);
+
+            GameObject.Find("GameplayUI").GetComponent<MainMenu>().Savedtimer = loadedData.TimerValue;
+
+
+            if (loadedData.LastGameUnfinished == true && DEBUGGING == false)
+            {
+                GameObject.Find("GameplayUI").transform.Find("Difficulty").gameObject.SetActive(true); 
+                GameObject.Find("Main Camera").GetComponent<Camera>().GetComponent<CameraFollow>().enabled = true;
+                GameObject.Find("PresentSpawn").GetComponent<PresentSpawn>().enabled = true;
+                GameObject.Find("ObstacleManager").GetComponent<ObstacleManager>().enabled = true; // Randomization as a bigger value will be implied.
+                GameObject.Find("PlayerModel").GetComponent<Movement>().enabled = true;
+
+                GameObject.Find("PlayerModel").transform.position = loadedData.LastSnowmanPosition;
+
+                GameObject.Find("MainMenuCamera").GetComponent<Camera>().enabled = false;
+                GameObject.Find("Main Camera").GetComponent<Camera>().enabled = true;
+
+                GameObject.Find("PlayButton").SetActive(false);
+                GameObject.Find("QuitButton").SetActive(false);
+                GameObject.Find("SettingsButton").SetActive(false);
+
+                GameObject.Find("Score").GetComponent<Text>().enabled = true;
+                GameObject.Find("GameName").GetComponent<Text>().enabled = false;
+                AudioScript.LowerAudioVolume();
+                Cursor.visible = false;
+
+                Destroy(GameObject.Find("Snowman"));
+
+                if (loadedData.IsTimerOn == true)
+                {
+                    GameObject.Find("GameplayUI").transform.Find("TimerText").gameObject.SetActive(true);
+                    GameObject.Find("GameplayUI").transform.Find("SavedTimer").gameObject.SetActive(true);
+                }
+                else
+                {
+                    GameObject.Find("GameplayUI").transform.Find("TimerText").gameObject.SetActive(false);
+                    GameObject.Find("GameplayUI").transform.Find("SavedTimer").gameObject.SetActive(false);
+                }
+
+                if (loadedData.HasExtraLife == true)
+                {
+                    GameObject.Find("PlayerModel").GetComponent<Movement>().ExtraLife = true;
+                }
+                else
+                {
+                    GameObject.Find("PlayerModel").GetComponent<Movement>().ExtraLife = false;
+                }
+
+                GameObject.Find("GameplayUI").GetComponent<MainMenu>().timer = loadedData.LastTimerValue;
+                GameObject.Find("GameplayUI").transform.Find("TimerText").gameObject.GetComponentInChildren<Text>().text = "Timer: " + GameObject.Find("GameplayUI").GetComponent<MainMenu>().timer.ToString("0.00");
+                GameObject.Find("PointManager").GetComponent<PointManager>().Score = loadedData.LastScore;
+            }
+
+
+            TimerValue = loadedData.TimerValue;
+
+            LastSnowmanPosition = loadedData.LastSnowmanPosition;
+            IsTimerOn = loadedData.IsTimerOn;
+            LastGameUnfinished = loadedData.LastGameUnfinished;
+            HasExtraLife = loadedData.HasExtraLife;
+            LastTimerValue = loadedData.LastTimerValue;
+            LastScore = loadedData.LastScore;
+        
+        }
+    }
+}
+  
