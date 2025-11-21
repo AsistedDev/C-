@@ -1,0 +1,118 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+
+public class Movement : MonoBehaviour
+{
+    public new Rigidbody rigidbody;
+    private float MaxSpeed = 7f;
+    public float MoveSpeed;
+
+    public int MinimumXAxisNumber;
+    public int MaximumXAxisNumber;
+
+    public int MinimumYAxisNumber;
+    public int MaximumYAxisNumber;
+
+    public int MinimumZAxisNumber;
+    public int MaximumZAxisNumber;
+
+    public float rotationSpeed = 5f; 
+
+    private float xRotation = 0f; 
+    private float yRotation = 0f; 
+
+    public Camera MainCamera;
+
+    public PresentSpawn PresentSpawnerScript;
+    public PointManager PointManagerScript;
+  
+    private int Level = 1;
+
+    private Vector3 KeyInput;
+
+    public Transform ParticleTrail;
+
+    public bool ExtraLife;
+
+
+    void Start()
+    {
+        rigidbody.drag = 2f; 
+        rigidbody.mass = 1f;
+       
+    }
+
+    void Update()
+    {
+        KeyInput = new Vector3(Input.GetAxis("Horizontal"), 0, Input.GetAxis("Vertical"));
+        rigidbody.constraints = RigidbodyConstraints.FreezeRotation;
+
+
+        float mouseX = Input.GetAxis("Mouse X");
+
+        
+        yRotation += mouseX * rotationSpeed;
+
+        
+        transform.rotation = Quaternion.Euler(0f, yRotation, 0f);
+
+        transform.position = ConstrainPlayerPosition(rigidbody.position);
+
+        if (rigidbody.velocity.magnitude > 0.1f)
+        {
+            ParticleSystem particleSystem = ParticleTrail.GetComponent<ParticleSystem>();
+            var emission = particleSystem.emission;
+            particleSystem.Play();
+            emission.enabled = true;
+        }
+        else
+        {
+            ParticleSystem particleSystem = ParticleTrail.GetComponent<ParticleSystem>();
+            var emission = particleSystem.emission;
+            emission.enabled = false;
+        }
+
+        if (KeyInput.magnitude > 0)
+        {
+            Vector3 relativeInput = transform.TransformDirection(KeyInput.normalized);
+   
+            if (rigidbody.velocity.magnitude < MaxSpeed)
+            {
+                rigidbody.AddForce(relativeInput * MoveSpeed, ForceMode.Acceleration);
+            }
+        }
+}
+
+    private void OnTriggerEnter(Collider collision)
+    {
+        if (collision.transform.CompareTag("Present"))
+        {
+            print("Touched");
+            Destroy(collision.transform.gameObject);
+            PresentSpawnerScript.DecreasePresentInt();
+            PointManagerScript.AddPoints();
+        }
+       
+    }
+
+    public Vector3 ConstrainPlayerPosition(Vector3 playerPosition)
+    {
+        float clampedX = Mathf.Clamp(playerPosition.x, MinimumXAxisNumber, MaximumXAxisNumber);
+        float clampedY = Mathf.Clamp(playerPosition.y, MinimumYAxisNumber, MaximumYAxisNumber);
+        float clampedZ = Mathf.Clamp(playerPosition.z, MinimumZAxisNumber, MaximumZAxisNumber);
+
+        return new Vector3(clampedX, clampedY, clampedZ);
+    }
+
+    public void AddExtraLife()
+    {
+        ExtraLife = true;
+    }
+
+    public void RemoveExtraLife()
+    {
+        ExtraLife = false;
+    }
+}
