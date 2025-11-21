@@ -1,0 +1,26 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.UI;
+
+public class PointManager : MonoBehaviour
+{
+
+    public int Score = 0;
+    public Text ScoreText;
+
+    public ObstacleManager obstacleManagerScript;
+    public AudioManager audioManagerScript;
+
+    public void AddPoints()
+    {
+        Score += Random.Range(25,90);
+        //audioManagerScript.PickupAudio();
+    }
+    
+    void Update()
+    {
+        ScoreText.text = $"Current Score: {Score}";
+        obstacleManagerScript.IncreaseDifficulty(Score);
+    }
+}
