@@ -1,0 +1,295 @@
+using UnityEngine;
+using UnityEngine.UI;
+using UnityEngine.SceneManagement;
+
+public class MainMenu : MonoBehaviour
+{
+    // SCRIPTS //
+    public AudioManager AudioScript;
+    public Movement movementScript;
+    public PointManager pointManagerScript;
+    public Datasave Datasavemanager;
+    //---------------------------//
+
+    public Camera MainCamera;
+    public Camera SceneCamera;
+
+    public GameObject PlayButton;
+    public GameObject QuitButton;
+    public GameObject SettingsButton;
+
+    public Text GameName;
+    public Text ScoreText;
+
+    public GameObject Difficulty;
+
+    public GameObject SettingsFrame;
+    public Button Exit;
+    public Button ExtraLiveButton;
+    public Button TimerButton;
+
+    public GameObject SavedTimer;
+
+    public GameObject TimerFrame;
+    public float Savedtimer = 0f;
+    public float timer = 0f;
+
+    public bool ExtraLiveActive = false;
+    public bool TimerButtonActive = false;
+
+    public GameObject Backupsnowman;
+    private Vector3 DefaultSpawnSpot = new Vector3(-2.844691f, 0.784f, -6.585061f);
+
+    public GameObject FramePanel;
+
+    private void Start()
+    {
+        Difficulty.SetActive(false);
+        Cursor.visible = true;
+        SceneCamera.enabled = true;
+        MainCamera.enabled = false;
+        MainCamera.GetComponent<CameraFollow>().enabled = false;
+        GameObject.Find("PresentSpawn").GetComponent<PresentSpawn>().enabled = false;
+        GameObject.Find("ObstacleManager").GetComponent<ObstacleManager>().enabled = false;
+        GameObject.Find("PlayerModel").GetComponent<Movement>().enabled = false;
+
+        Datasavemanager.LoadGame();
+    }
+
+
+    public void PlayGame()
+    {
+        Difficulty.SetActive(true);
+        MainCamera.GetComponent<CameraFollow>().enabled = true;
+        GameObject.Find("PresentSpawn").GetComponent<PresentSpawn>().enabled = true;
+        GameObject.Find("ObstacleManager").GetComponent<ObstacleManager>().enabled = true;
+        movementScript.enabled = true;
+        GameObject.Find("PlayerModel").transform.position = DefaultSpawnSpot;
+
+        SavedTimer.GetComponentInChildren<Text>().text = "Saved Timer: " + GameObject.Find("DataSaver").GetComponent<Datasave>().TimerValue.ToString("0.00");
+
+        SceneCamera.enabled = false;
+        MainCamera.enabled = true;
+
+        PlayButton.SetActive(false);
+        QuitButton.SetActive(false);
+        SettingsButton.SetActive(false);
+
+        ScoreText.enabled = true;
+        GameName.enabled = false;
+        AudioScript.LowerAudioVolume();
+        Cursor.visible = false;
+
+        if (TimerButtonActive == true)
+        {
+            TimerFrame.SetActive(true);
+            SavedTimer.SetActive(true);
+        }
+
+        Destroy(GameObject.Find("Snowman"));
+        Backupsnowman.SetActive(false);
+    }
+
+
+    public void Update()
+    {
+
+        if (Input.GetKeyDown(KeyCode.Escape) && PlayButton.activeSelf == false)
+        {
+            QuitPanelOpen();
+            Cursor.visible = true;
+        }
+
+
+            if (TimerFrame.activeSelf == true && pointManagerScript.Score < 7000)
+        {
+            timer += Time.deltaTime;
+
+            TimerFrame.GetComponentInChildren<Text>().text = "Timer: " + timer.ToString("0.00");
+        }
+        else if (pointManagerScript.Score >= 7000) 
+        {
+            TimerFrame.GetComponentInChildren<Text>().text = "Timer: " + timer.ToString("0.00") + "(Stopped)";
+
+            if (Datasavemanager.TimerValue < timer)
+            {
+                GameObject.Find("DataSaver").GetComponent<Datasave>().TimerValue = timer;
+                SavedTimer.GetComponentInChildren<Text>().text = "Saved Timer: " + GameObject.Find("DataSaver").GetComponent<Datasave>().TimerValue.ToString("0.00");
+                print("Time Value set to " + timer);
+            }
+        }
+    }
+
+    public void QuitGame()
+    {
+        Application.Quit();
+    }
+
+    public void StartSettings()
+    {
+        SettingsFrame.SetActive(true);
+    }
+
+    public void QuitSettings()
+    {
+        SettingsFrame.SetActive(false);
+    }
+
+    public void OnExtraLiveActivated()
+    {
+        if (ExtraLiveActive == false)
+        {
+            movementScript.AddExtraLife();
+            ExtraLiveButton.GetComponent<Image>().color = Color.green;
+            ExtraLiveButton.GetComponentInChildren<Text>().text = "ENABLED";
+            ExtraLiveActive = true;
+        }
+        else if (ExtraLiveActive == true)
+        {
+            movementScript.RemoveExtraLife();
+            ExtraLiveButton.GetComponent<Image>().color = Color.red;
+            ExtraLiveButton.GetComponentInChildren<Text>().text = "DISABLED";
+            ExtraLiveActive = false;
+        }
+    }
+
+    public void OnTimerActivated()
+    {
+        if (TimerButtonActive == false)
+        {
+            TimerButton.GetComponent<Image>().color = Color.green;
+            TimerButton.GetComponentInChildren<Text>().text = "ENABLED";
+            TimerButtonActive = true;
+        }
+        else if (TimerButtonActive == true)
+        {
+            TimerButton.GetComponent<Image>().color = Color.red;
+            TimerButton.GetComponentInChildren<Text>().text = "DISABLED";
+            TimerButtonActive = false;
+        }
+    }
+
+    public void OnNoPressed()
+    {
+        GameObject.Find("QuitFrame").SetActive(false);
+        Cursor.visible = false;
+    }
+
+    public void QuitPanelOpen()
+    {
+        FramePanel.SetActive(true);
+    }
+
+    public void FullGameReset()
+    {
+        GameObject.Find("PlayerModel").transform.position = DefaultSpawnSpot;
+
+        Datasavemanager.LastSnowmanPosition = new Vector3(0,0,0);
+        Datasavemanager.LastTimerValue = 0f;
+        Datasavemanager.LastScore = 0;
+
+        Datasavemanager.IsTimerOn = false;
+        Datasavemanager.LastGameUnfinished = false;
+        Datasavemanager.HasExtraLife = false;
+
+        timer = 0f;
+
+        Difficulty.SetActive(false);
+        MainCamera.GetComponent<CameraFollow>().enabled = false;
+        Backupsnowman.SetActive(true);
+
+        GameObject.Find("PresentSpawn").GetComponent<PresentSpawn>().StopAllCoroutines();
+        GameObject.Find("ObstacleManager").GetComponent<ObstacleManager>().StopAllCoroutines();
+        GameObject.Find("ObstacleManager").GetComponent<ObstacleManager>().enabled = false;
+        GameObject.Find("PlayerModel").GetComponent<Movement>().enabled = false;
+
+        GameObject.Find("ObstacleManager").GetComponent<ObstacleManager>().Easy1.enabled = false;
+        GameObject.Find("ObstacleManager").GetComponent<ObstacleManager>().Easy2.enabled = false;
+        GameObject.Find("ObstacleManager").GetComponent<ObstacleManager>().Medium1.enabled = false;
+        GameObject.Find("ObstacleManager").GetComponent<ObstacleManager>().Medium2.enabled = false;
+        GameObject.Find("ObstacleManager").GetComponent<ObstacleManager>().Hard1.enabled = false;
+        GameObject.Find("ObstacleManager").GetComponent<ObstacleManager>().Hard2.enabled = false;
+
+        GameObject.Find("ObstacleManager").GetComponent<ObstacleManager>().WarningSphereSpawnInterval = 1.2f;
+        GameObject.Find("ObstacleManager").GetComponent<ObstacleManager>().SpherePerTime = 7;
+        GameObject.Find("ObstacleManager").GetComponent<ObstacleManager>().WarningSphereDurationPeriod = 1.5f;
+
+
+        GameObject[] PresentsToBeDeleted = GameObject.FindGameObjectsWithTag("Present");
+
+        foreach (GameObject present in PresentsToBeDeleted)
+        {
+            Destroy(present); // Destroys every present
+        }
+
+        GameObject[] warningSpheres = GameObject.FindGameObjectsWithTag("WarningSphere");
+
+        foreach (GameObject sphere in warningSpheres)
+        {
+            Destroy(sphere);  // Destroy each WarningSphere
+        }
+
+        SceneCamera.enabled = true;
+        MainCamera.enabled = false;
+
+        PlayButton.SetActive(true);
+        QuitButton.SetActive(true);
+        SettingsButton.SetActive(true);
+
+        ScoreText.enabled = false;
+        GameName.enabled = true;
+        Cursor.visible = true;
+
+
+        TimerFrame.SetActive(false);
+        SavedTimer.SetActive(false);
+        
+
+        pointManagerScript.Score = 0;
+
+        Datasavemanager.IsTimerOn = false;
+        Datasavemanager.LastGameUnfinished = false;
+        Datasavemanager.LastScore = 0;
+        Datasavemanager.LastSnowmanPosition = new Vector3(0, 0, 0);
+
+        Datasavemanager.SaveData();
+    }
+ 
+    private void OnApplicationQuit()
+    {
+
+        Datasavemanager.LastSnowmanPosition = GameObject.Find("PlayerModel").transform.position;
+        Datasavemanager.LastTimerValue = timer;
+        Datasavemanager.LastScore = pointManagerScript.Score;
+
+
+        if (TimerFrame.activeSelf == true)
+        {
+            GameObject.Find("DataSaver").GetComponent<Datasave>().IsTimerOn = true;
+        }
+        else if (TimerFrame.activeSelf == false)
+        {
+            GameObject.Find("DataSaver").GetComponent<Datasave>().IsTimerOn = false;
+        }
+
+        if (SceneCamera.enabled == false)
+        {
+            GameObject.Find("DataSaver").GetComponent<Datasave>().LastGameUnfinished = true;
+        }
+        else
+        {
+            GameObject.Find("DataSaver").GetComponent<Datasave>().LastGameUnfinished = false;
+        }
+
+        if (GameObject.Find("PlayerModel").GetComponent<Movement>().ExtraLife == true)
+        {
+            GameObject.Find("DataSaver").GetComponent<Datasave>().HasExtraLife = true;
+        }
+        else
+        {
+            GameObject.Find("DataSaver").GetComponent<Datasave>().HasExtraLife = false;
+        }
+
+        Datasavemanager.SaveData();
+    }
+}
